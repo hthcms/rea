@@ -1,9 +1,7 @@
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { parse } from "yaml";
-import { z } from "zod";
 
 import {
   selectRecoveryRelease,
@@ -149,76 +147,4 @@ it("requires npm bytes to match the retained archive and original source/run", a
   await expect(verifyRecoveryPackage({ ...input, runId: 456 })).rejects.toThrow(
     "workflow run ID mismatch",
   );
-});
-
-it("limits recovery to verification and dependent MCP publication from the released source", async () => {
-  const step = z.object({
-    uses: z.string().optional(),
-    run: z.string().optional(),
-    with: z.record(z.string(), z.unknown()).optional(),
-  });
-  const workflow = z
-    .object({
-      on: z.record(z.string(), z.unknown()),
-      jobs: z.object({
-        verify: z.object({
-          if: z.string(),
-          permissions: z.record(z.string(), z.string()),
-          steps: z.array(step),
-        }),
-        "publish-mcp": z.object({
-          needs: z.string(),
-          permissions: z.record(z.string(), z.string()),
-          steps: z.array(step),
-        }),
-      }),
-    })
-    .parse(
-      parse(await readFile(".github/workflows/release-recovery.yml", "utf8")),
-    );
-  expect(Object.keys(workflow.on)).toEqual(["workflow_dispatch"]);
-  expect(workflow.jobs.verify.if).toBe("github.ref == 'refs/heads/main'");
-  expect(workflow.jobs.verify.permissions).toEqual({
-    contents: "read",
-    actions: "read",
-  });
-  const steps = workflow.jobs.verify.steps;
-  for (const name of ["verified-release-package", "rea-test-runtime"])
-    expect(
-      steps.find((candidate) => candidate.with?.name === name)?.with,
-    ).toMatchObject({
-      "run-id": "${{ steps.release.outputs.run_id }}",
-      "github-token": "${{ github.token }}",
-    });
-  const digest = steps.findIndex(
-    (candidate) =>
-      candidate.run === "node scripts/ci/release-recovery.mjs verify",
-  );
-  const canary = steps.findIndex((candidate) =>
-    candidate.run?.includes("verify-published-package.mjs"),
-  );
-  const rehearsal = steps.findIndex((candidate) =>
-    candidate.run?.includes("verify-release-artifact.mjs"),
-  );
-  expect(digest).toBeGreaterThanOrEqual(0);
-  expect(rehearsal).toBeGreaterThan(digest);
-  expect(canary).toBeGreaterThan(rehearsal);
-  const publisher = workflow.jobs["publish-mcp"];
-  expect(publisher.needs).toBe("verify");
-  expect(
-    publisher.steps.find(
-      (candidate) => candidate.with?.path === ".cache/release-source",
-    )?.with?.ref,
-  ).toBe("${{ needs.verify.outputs.source_sha }}");
-  expect(
-    publisher.steps.find(
-      (candidate) => candidate.uses === "./.github/actions/publish-mcp",
-    )?.with,
-  ).toEqual({ directory: ".cache/release-source" });
-  for (const candidate of [...steps, ...publisher.steps]) {
-    expect(candidate.run ?? "").not.toMatch(
-      /npm publish|git tag|gh release create/u,
-    );
-    expect(candidate.uses ?? "").not.toContain("release-please");
-  }
 });

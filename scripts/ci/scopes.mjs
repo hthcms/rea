@@ -100,7 +100,6 @@ export const SCOPES = {
     "scripts/lib/release-package-canary.mjs",
     "scripts/verify-published-package.mjs",
     "tests/boundary/filesystem/releaseRecovery.test.ts",
-    "tests/boundary/filesystem/mcpRegistryPublication.test.ts",
     "tests/boundary/filesystem/npmRelease.test.ts",
     "tests/boundary/process/releaseArtifactCanary.test.ts",
     "src/windows/**",

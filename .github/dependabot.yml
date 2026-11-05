@@ -5,8 +5,6 @@ updates:
       - /
       - /.github/actions/npm-cache
       - /.github/actions/portable-build-cache
-      - /.github/actions/prepare-release-package
-      - /.github/actions/publish-mcp
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

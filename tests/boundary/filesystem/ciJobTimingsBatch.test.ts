@@ -11,11 +11,18 @@ const batchScript = fileURLToPath(
   new URL("../../../scripts/ci/job-timings-batch.mjs", import.meta.url),
 );
 
-it("collects the latest attempt for recent completed CI and Release runs into a bounded manifest", async () => {
+it("collects the latest attempt for recent completed CI runs into a bounded manifest", async () => {
   const recent = new Date().toISOString();
   const fixture = await createFixture([
     {
       workflow_runs: [
+        {
+          id: 43,
+          run_attempt: 2,
+          status: "completed",
+          conclusion: "success",
+          created_at: new Date(Date.parse(recent) + 2_000).toISOString(),
+        },
         {
           id: 42,
           event: "push",
@@ -31,17 +38,6 @@ it("collects the latest attempt for recent completed CI and Release runs into a 
           status: "completed",
           conclusion: "cancelled",
           created_at: recent,
-        },
-      ],
-    },
-    {
-      workflow_runs: [
-        {
-          id: 43,
-          run_attempt: 2,
-          status: "completed",
-          conclusion: "success",
-          created_at: new Date(Date.parse(recent) + 2_000).toISOString(),
         },
       ],
     },
@@ -68,7 +64,7 @@ it("collects the latest attempt for recent completed CI and Release runs into a 
     exhaustive: false,
   });
   expect(manifest.coverage).toMatchObject({
-    workflowsQueried: ["CI", "Release"],
+    workflowsQueried: ["CI"],
     selectedRuns: 3,
     collectedRuns: 3,
   });
@@ -136,7 +132,6 @@ it("records listing and per-run errors without claiming complete coverage", asyn
         },
       ],
     },
-    { error: true },
     { jobs: "malformed" },
   ]);
   await runBatch(fixture);
@@ -147,10 +142,7 @@ it("records listing and per-run errors without claiming complete coverage", asyn
     ),
   );
   expect(manifest.selection.exhaustive).toBe(false);
-  expect(manifest.errors).toMatchObject([
-    { scope: "workflow:Release" },
-    { scope: "run" },
-  ]);
+  expect(manifest.errors).toMatchObject([{ scope: "run" }]);
   expect(manifest.runs[0]).toMatchObject({
     id: 7,
     runAttempt: 2,
@@ -168,7 +160,6 @@ it("retains a partial manifest when its collection budget is exhausted", async (
         created_at: new Date().toISOString(),
       })),
     },
-    { workflow_runs: [] },
   ]);
   await executeWorkflowFixture(
     process.execPath,

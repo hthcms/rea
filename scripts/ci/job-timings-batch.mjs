@@ -10,15 +10,12 @@ const execFileAsync = promisify(execFile);
 const OUTPUT_DIRECTORY = join(".cache", "ci-job-timings");
 const MAX_BUFFER = 16 * 1024 * 1024;
 const API_TIMEOUT_MS = 30_000;
-const WORKFLOWS = [
-  { id: "ci.yml", name: "CI" },
-  { id: "release.yml", name: "Release" },
-];
+const WORKFLOWS = [{ id: "ci.yml", name: "CI" }];
 const LOOKBACK_MS = 24 * 60 * 60 * 1_000;
 const MAX_RUNS_PER_WORKFLOW = 100;
 const TIME_BUDGET_MS = 240_000;
 
-/** Collect a bounded recent sample of completed CI and Release attempts. */
+/** Collect a bounded recent sample of completed CI attempts. */
 export async function collectJobTimingsBatch({
   repository,
   outputDirectory = OUTPUT_DIRECTORY,

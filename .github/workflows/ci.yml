@@ -5,9 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main, "release/*"]
-  schedule:
-    - cron: "23 0-2,4-23 * * *"
-    - cron: "23 3 * * *"
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -22,9 +19,8 @@ permissions:
 concurrency:
   # Complete qualification finishes even while main receives more pushes.
   # Main feedback also finishes, coalescing newer pushes to one pending run.
-  # Scheduled/manual main runs coalesce to one active and the latest pending;
-  # release and label-triggered qualification use exact-revision groups.
-  group: ci-${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || inputs.source_sha != '' || contains(github.event.pull_request.labels.*.name, 'ci:full')) && 'qualification' || 'feedback' }}-${{ inputs.source_sha || github.event.pull_request.number || github.ref }}
+  # Manual and label-triggered qualification use exact-revision groups.
+  group: ci-${{ (github.event_name == 'workflow_dispatch' || inputs.source_sha != '' || contains(github.event.pull_request.labels.*.name, 'ci:full')) && 'qualification' || 'feedback' }}-${{ inputs.source_sha || github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' && inputs.source_sha == '' && !contains(github.event.pull_request.labels.*.name, 'ci:full') }}
 
 env:

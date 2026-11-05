@@ -93,7 +93,6 @@ it("exports every canonical scope with read authority for admission and keeps te
   const timings = z
     .object({
       on: z.object({
-        schedule: z.array(z.object({ cron: z.string() })),
         workflow_dispatch: z.unknown(),
         workflow_run: z.unknown().optional(),
       }),
@@ -120,7 +119,7 @@ it("exports every canonical scope with read authority for admission and keeps te
       ),
     );
   expect(timings.on.workflow_run).toBeUndefined();
-  expect(timings.on.schedule).toHaveLength(1);
+  expect(timings.on).not.toHaveProperty("schedule");
   expect(timings.permissions).toEqual({
     contents: "read",
     actions: "read",

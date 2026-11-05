@@ -301,8 +301,8 @@ feedback and full qualification, including exact-revision release qualification,
 require coverage and both preflights. A failed, canceled, skipped or missing
 selected quality job still fails the required gate.
 
-The separate **Mutation sweep** workflow runs both complete configurations daily
-and on manual dispatch, in two isolated jobs. It is a maintenance check outside
+The separate **Mutation sweep** workflow runs both complete configurations on
+manual dispatch, in two isolated jobs. It is a maintenance check outside
 the PR and release publication gates. `ci:full` requests full regression,
 coverage and provider qualification; it does not request a complete mutation
 sweep. Use the Mutation sweep workflow to request that result. Targets,
@@ -386,8 +386,8 @@ one-source/five-built split retains six test jobs; it makes no hosted speedup
 claim. Current complete timings and completed candidate hosted runs are needed
 before enabling a smaller adaptive matrix.
 
-The separate `CI timings` workflow batches recent completed CI and Release runs
-hourly or on manual dispatch. It uploads `ci-job-timings-batch` with raw API pages and
+The separate `CI timings` workflow batches recent completed CI runs on manual
+dispatch. It uploads `ci-job-timings-batch` with raw API pages and
 a normalized point-in-time report for each collected workflow attempt, plus a
 batch manifest describing examined coverage, failures, and limits. Overlapping
 lookback windows may collect an attempt again; identify records by run ID and
